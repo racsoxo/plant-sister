@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}{{ planta.nombre }}{% endblock %}
+
+{% block content %}
+<div class="plant-detail-container">
+    <!-- Cabecera con imagen de fondo -->
+    <div class="plant-header" style="background-image: url('{{ url_for('static', filename='uploads/' + planta.imagen) if planta.imagen else url_for('static', filename='img/default-plant.png') }}')">
+        <div class="header-content">
+            <button class="back-button" onclick="history.back()">
+                <span>←</span>
+            </button>
+            <div class="plant-title">
+                <h1>{{ planta.nombre }}</h1>
+                {% if planta.nombre_cientifico %}
+                    <p class="scientific-name">{{ planta.nombre_cientifico }}</p>
+                {% endif %}
+                {% if planta.nombre_alias %}
+                    <p class="alias">{{ planta.nombre_alias }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Información principal -->
+    <div class="plant-info-cards">
+        <!-- Tarjeta de riego -->
+        <div class="info-card watering-card">
+            <div class="card-header">
+                <h3>💧 Riego</h3>
+                <button class="btn-primary" onclick="registrarRiego()">Registrar riego</button>
+            </div>
+            <div class="watering-info">
+                <p class="next-watering" id="nextWatering">
+                    Calculando próximo riego...
+                </p>
+                <div class="watering-history">
+                    <h4>Últimos riegos</h4>
+                    <div class="history-list" id="wateringHistory">
+                        {% for riego in planta.riegos[-5:]|reverse %}
+                            <div class="history-item">
+                                <span class="date">{{ riego.fecha.strftime('%d/%m/%Y') }}</span>
+                                {% if riego.notas %}
+                                    <span class="notes">{{ riego.notas }}</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta de cuidados -->
+        <div class="info-card care-card">
+            <h3>🌱 Cuidados básicos</h3>
+            <div class="care-details">
+                <div class="care-item">
+                    <span class="icon">☀️</span>
+                    <div class="detail">
+                        <h4>Luz</h4>
+                        <p>{{ planta.luz }}</p>
+                    </div>
+                </div>
+                <div class="care-item">
+                    <span class="icon">🌡️</span>
+                    <div class="detail">
+                        <h4>Temperatura</h4>
+                        <p>{{ planta.temperatura }}</p>
+                    </div>
+                </div>
+                {% if planta.cuidados %}
+                    <div class="care-notes">
+                        <h4>Notas adicionales</h4>
+                        <p>{{ planta.cuidados }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="plant-actions">
+        <button class="btn-secondary" onclick="editarPlanta()">
+            <span>✏️</span> Editar
+        </button>
+        <button class="btn-danger" onclick="confirmarEliminar()">
+            <span>🗑️</span> Eliminar
+        </button>
+    </div>
+</div>
+
+<!-- Modal de registro de riego -->
+<div id="modalRiego" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Registrar riego</h2>
+            <button class="close-btn" onclick="cerrarModalRiego()">&times;</button>
+        </div>
+        <form id="formRiego" onsubmit="guardarRiego(event)">
+            <div class="form-group">
+                <label for="notasRiego">Notas (opcional)</label>
+                <textarea id="notasRiego" name="notas" placeholder="Ej: Riego abundante, fertilizante añadido..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="cerrarModalRiego()">Cancelar</button>
+                <button type="submit" class="btn-primary">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let plantaId = {{ planta.id }};
+
+    // Actualizar información de próximo riego
+    function actualizarProximoRiego() {
+        fetch(`/proximo_riego/${plantaId}`)
+            .then(response => response.json())
+            .then(data => {
+                const nextWateringEl = document.getElementById('nextWatering');
+                if (data.error) {
+                    nextWateringEl.innerHTML = 'No hay registros de riego previos';
+                    return;
+                }
+
+                if (data.dias_restantes <= 0) {
+                    nextWateringEl.innerHTML = `
+                        <span class="urgent">¡Riego pendiente!</span>
+                        <small>Debió regarse hace ${Math.abs(data.dias_restantes)} días</small>
+                    `;
+                } else {
+                    nextWateringEl.innerHTML = `
+                        Próximo riego en ${data.dias_restantes} días
+                        <small>${data.proximo_riego}</small>
+                    `;
+                }
+            });
+    }
+
+    // Registro de riego
+    function registrarRiego() {
+        document.getElementById('modalRiego').style.display = 'block';
+    }
+
+    function cerrarModalRiego() {
+        document.getElementById('modalRiego').style.display = 'none';
+        document.getElementById('formRiego').reset();
+    }
+
+    async function guardarRiego(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+
+        try {
+            const response = await fetch(`/registrar_riego/${plantaId}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                cerrarModalRiego();
+                actualizarProximoRiego();
+                location.reload(); // Recargar para ver el nuevo registro
+            } else {
+                alert('Error al registrar el riego');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al registrar el riego');
+        }
+    }
+
+    // Edición y eliminación
+    function editarPlanta() {
+        window.location.href = `/editar_planta/${plantaId}`;
+    }
+
+    function confirmarEliminar() {
+        if (confirm('¿Estás seguro de que quieres eliminar esta planta?')) {
+            fetch(`/eliminar_planta/${plantaId}`, {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    alert('Error al eliminar la planta');
+                }
+            });
+        }
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+        actualizarProximoRiego();
+    });
+</script>
+{% endblock %}

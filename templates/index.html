@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Plantas{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="plants-header">
+        <h1>Mis Plantas</h1>
+        <button id="btnAbrirModal" class="add-plant-btn">
+            <i class="fas fa-plus"></i> Agregar planta
+        </button>
+    </div>
+
+    {% if plantas %}
+    <div class="plants-grid">
+        {% for planta in plantas %}
+        <div class="plant-card {% if planta.necesita_riego %}needs-water{% endif %}">
+            <div class="plant-image">
+                {% if planta.imagen %}
+                <img src="{{ url_for('static', filename='uploads/' + planta.imagen) }}" alt="{{ planta.nombre_alias }}">
+                {% else %}
+                <div class="no-image">🌿</div>
+                {% endif %}
+            </div>
+            <div class="plant-info">
+                <h3>{{ planta.nombre_alias }}</h3>
+                <p class="scientific-name">{{ planta.nombre_cientifico }}</p>
+                <div class="water-status">
+                    {% if planta.necesita_riego %}
+                    <span class="needs-water">Necesita riego</span>
+                    {% else %}
+                    <span>Próximo riego en {{ planta.dias_hasta_riego }} días</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <img src="{{ url_for('static', filename='img/empty-plant.svg') }}" alt="No hay plantas">
+        <p>No tienes plantas registradas</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal -->
+<div id="modal-nueva-planta" class="modal">
+    <div class="modal-content">
+        <h2>Nueva Planta</h2>
+        <button class="close-btn" id="btnCerrarModal">&times;</button>
+        
+        <!-- Paso 1: Identificación -->
+        <div id="paso-1" class="paso-formulario">
+            <div class="search-container">
+                <input type="text" 
+                       id="nombre-busqueda" 
+                       class="search-input"
+                       placeholder="Buscar planta por nombre...">
+                <div id="resultados-busqueda" class="resultados-container"></div>
+            </div>
+
+            <div class="photo-options">
+                <button id="btnSubirFoto" class="upload-btn">
+                    <i class="fas fa-image"></i> Subir foto
+                </button>
+                <button id="btnTomarFoto" class="camera-btn">
+                    <i class="fas fa-camera"></i> Tomar foto
+                </button>
+            </div>
+            <input type="file" id="imagen-input" accept="image/*" style="display: none;">
+        </div>
+
+        <!-- Paso 2: Información y alias (opcional) -->
+        <div id="paso-2" class="paso-formulario" style="display: none;">
+            <div id="info-identificacion"></div>
+            <div class="form-group">
+                <label for="alias-planta">Nombre personalizado (opcional)</label>
+                <input type="text" id="alias-planta" placeholder="Ej: Monstera del salón">
+            </div>
+            <div class="form-buttons">
+                <button id="btnGuardar" class="save-btn">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

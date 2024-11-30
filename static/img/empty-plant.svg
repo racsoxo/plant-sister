@@ -1,0 +1,23 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Maceta -->
+    <path d="M60 140 L140 140 L130 200 L70 200 Z" fill="#e57373"/>
+    
+    <!-- Tallo principal -->
+    <path d="M100 140 Q100 100 100 80" stroke="#4CAF50" stroke-width="4" fill="none"/>
+    
+    <!-- Hojas -->
+    <path d="M100 120 Q120 110 130 120" stroke="#4CAF50" stroke-width="3" fill="none"/>
+    <path d="M100 120 Q80 110 70 120" stroke="#4CAF50" stroke-width="3" fill="none"/>
+    <path d="M100 100 Q130 90 140 100" stroke="#4CAF50" stroke-width="3" fill="none"/>
+    <path d="M100 100 Q70 90 60 100" stroke="#4CAF50" stroke-width="3" fill="none"/>
+    <path d="M100 80 Q140 70 150 80" stroke="#4CAF50" stroke-width="3" fill="none"/>
+    <path d="M100 80 Q60 70 50 80" stroke="#4CAF50" stroke-width="3" fill="none"/>
+    
+    <!-- Círculo decorativo -->
+    <circle cx="100" cy="100" r="60" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
+    
+    <!-- Texto -->
+    <text x="100" y="40" font-family="Arial" font-size="12" fill="#666666" text-anchor="middle">
+        Agrega tu primera planta
+    </text>
+</svg>
