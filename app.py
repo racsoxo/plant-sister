@@ -4,6 +4,8 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 import os
 from services.plant_recognition import PlantRecognitionService
+from models.planta import Planta
+from extensions import db
 
 app = Flask(__name__)
 CORS(app)
@@ -92,7 +94,7 @@ def procesar_imagen():
         imagen.thumbnail((800, 800))
         imagen.save(filepath, 'JPEG', quality=85)
         
-        # Realizar predicción
+        # Realizar predicción usando la API de Gemini
         resultados = plant_recognition.predict(imagen)
         
         if not resultados:
@@ -111,6 +113,23 @@ def procesar_imagen():
             
     except Exception as e:
         print(f"Error en identificación: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/agregar_planta', methods=['POST'])
+def agregar_planta():
+    try:
+        data = request.json
+        nombre_comun = data.get('nombre_comun')
+        nombre_cientifico = data.get('nombre_cientifico')
+        frecuencia_riego = data.get('frecuencia_riego')
+
+        # Aquí puedes agregar la lógica para guardar en la base de datos
+        nueva_planta = Planta(nombre_comun=nombre_comun, nombre_cientifico=nombre_cientifico, frecuencia_riego=frecuencia_riego)
+        db.session.add(nueva_planta)
+        db.session.commit()
+
+        return jsonify({'message': 'Planta guardada exitosamente'}), 201
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

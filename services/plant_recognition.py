@@ -1,45 +1,54 @@
+import requests
 from PIL import Image
+import io
 import json
 import os
-import statistics
+import base64
 
 class PlantRecognitionService:
     def __init__(self):
-        # Cargar base de datos de plantas
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        with open(os.path.join(current_dir, 'plant_labels.json'), 'r', encoding='utf-8') as f:
-            self.plants = json.load(f)
-        
+        self.api_key = 'AIzaSyAt19bwnGiyHR-NgzOmQcWAVgly9BtwmoE'  # Tu clave API de Gemini
+        self.api_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent'  # URL de la API de Gemini
+
     def predict(self, image):
         try:
-            # Análisis básico de la imagen
-            image = image.resize((100, 100))
-            pixels = list(image.getdata())
-            
-            # Calcular color promedio
-            r_values = [p[0] for p in pixels]
-            g_values = [p[1] for p in pixels]
-            b_values = [p[2] for p in pixels]
-            
-            avg_r = statistics.mean(r_values)
-            avg_g = statistics.mean(g_values)
-            avg_b = statistics.mean(b_values)
-            
-            # Simulación básica basada en el color dominante
-            if avg_g > avg_r and avg_g > avg_b:  # Si domina el verde
-                results = [
-                    {'nombre': self.plants['0'], 'confidence': 0.85},
-                    {'nombre': self.plants['1'], 'confidence': 0.75},
-                    {'nombre': self.plants['2'], 'confidence': 0.65}
+            # Convertir la imagen a bytes
+            img_byte_arr = io.BytesIO()
+            image.save(img_byte_arr, format='JPEG')
+            img_byte_arr = img_byte_arr.getvalue()
+
+            # Convertir a base64
+            img_base64 = base64.b64encode(img_byte_arr).decode('utf-8')
+
+            # Hacer la solicitud a la API
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.api_key}'  # Asegúrate de que la clave API esté en la cabecera
+            }
+
+            # Preparar el payload
+            payload = {
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": img_base64
+                            }
+                        ]
+                    }
                 ]
+            }
+
+            response = requests.post(self.api_url, headers=headers, json=payload)
+
+            print(f"Respuesta de la API: {response.status_code}")  # Debug print
+            print(f"Contenido de la respuesta: {response.text}")  # Debug print
+
+            if response.status_code == 200:
+                return response.json()  # Devolver la respuesta JSON
             else:
-                results = [
-                    {'nombre': self.plants['8'], 'confidence': 0.80},
-                    {'nombre': self.plants['9'], 'confidence': 0.70},
-                    {'nombre': self.plants['4'], 'confidence': 0.60}
-                ]
-            
-            return results
+                print(f"Error en la API: {response.status_code} - {response.text}")
+                return None
             
         except Exception as e:
             print(f"Error en predicción: {str(e)}")
